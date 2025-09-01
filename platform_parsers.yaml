@@ -1,0 +1,65 @@
+platform_parsers:
+  zyxel_os:
+    command: "show mac address-table"
+    regex: |
+      (?m)^\s*(\d+)\s+\|\s+([0-9A-Fa-f:]{17})\s+\|\s+([\w\s]+?)\s+\|\s+(\S+)\s*
+    mapping:
+      vlan:      1
+      mac:       2
+      type:      3
+      interface: 4
+    pagination:
+      prompt_pattern: "--More--"
+      response: " "
+      max_pages: 300
+
+  zyxel_gs:                # ➜ GS1915, GS2220 series
+    netmiko_platform: zyxel_os
+    command: "show mac address-table all"
+    regex: |
+      (?m)^\s*(\d+)\s+(\d+)\s+([0-9A-Fa-f:]{17})\s+(Dynamic|Static)\s*
+    mapping:
+      interface: 1
+      vlan:      2
+      mac:       3
+      type:      4
+
+  cisco_s300:
+    command: "show mac address-table"
+    regex: |
+      (?m)^\s+(\d+)\s+([0-9A-Fa-f:]{17})\s+(\S+)\s+(dynamic|static|secure)\s*
+    mapping:
+      vlan:      1
+      mac:       2  
+      interface: 3
+      type:      4
+    hooks:
+      pre_cfg:   ["no logging console"]
+      post_cfg:  ["logging console"]
+    connection_options:
+      netmiko:
+        extras:
+          read_timeout_override: 20
+
+  cisco_ios:
+    command: "show mac address-table"
+    regex: |
+      (?m)^\s*(All|\d+)\s+([0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\.[0-9a-fA-F]{4})\s+(STATIC|DYNAMIC)\s+(\S+)\s*
+    mapping:
+      vlan: 1
+      mac: 2  
+      type: 3
+      interface: 4
+    hooks:
+      pre_cfg:   ["no logging console"]
+      post_cfg:  ["logging console"]
+  
+  huawei:
+    command: "display mac-address"
+    regex: |
+      (?m)^([0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4})\s+(\d+)\/\S*\s+(\S+)\s+(\w+)\s*
+    mapping:
+      mac: 1
+      vlan: 2
+      interface: 3
+      type: 4

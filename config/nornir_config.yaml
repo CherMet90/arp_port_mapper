@@ -1,0 +1,18 @@
+core:
+  num_workers: 20  # Количество потоков
+inventory:
+  plugin: SimpleInventory  # Или другой плагин, если нужно
+  options:
+    host_file: "inventory/hosts.yaml"  # Путь к файлу хостов (будет генерироваться динамически)
+    group_file: "inventory/groups.yaml"  # Опционально
+    defaults_file: "inventory/defaults.yaml"  # Опционально
+runner:
+  plugin: threaded  # Или 'serial' для последовательного выполнения
+  options:
+    num_workers: 20
+logging:
+  enabled: true
+  level: INFO
+  log_file: logs/nornir.log
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  to_console: true

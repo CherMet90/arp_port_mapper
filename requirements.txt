@@ -1,0 +1,6 @@
+click==8.1.7
+pandas==2.3.2
+python-dotenv==1.1.1
+PyYAML==6.0.2
+
+-e ../custom_python_modules

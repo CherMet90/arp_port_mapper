@@ -1,0 +1,12 @@
+session_logs/*.log
+results/*.csv
+logs/*.log
+adapters/__pycache__/
+__pycache__/
+.vscode/
+*.log
+gw_list.csv
+error_summary.json
+arp_port_mapping.csv
+.reygpt-mask.yml
+.env
