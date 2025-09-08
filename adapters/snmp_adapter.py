@@ -64,3 +64,39 @@ class SNMPAdapter:
         except Exception as e:
             logger.error(f"Failed to get ARP table from {ip_address}: {str(e)}")
             raise
+
+    def check_snmp_connectivity(self, host_ip: str, community: str, version: str = '2c') -> bool:
+        """
+        Perform a simple SNMP connectivity check using the existing get_hostname() method.
+
+        Args:
+            host_ip: Device IP address
+            community: SNMP community string  
+            version: SNMP version ('1', '2c', '3')
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        logger.debug(f"Checking SNMP connectivity to {host_ip} (version {version}, community={community})")
+
+        try:
+            # Create SNMPDevice instance with provided settings
+            snmp_device = SNMPDevice(
+                ip_address=host_ip,
+                community_string=community,
+                version=version
+            )
+
+            # Use existing get_hostname() method for connectivity check
+            hostname = snmp_device.get_hostname()
+
+            if hostname:
+                logger.debug(f"SNMP connectivity successful for {host_ip}: hostname='{hostname}'")
+                return hostname
+            else:
+                logger.debug(f"SNMP connectivity failed for {host_ip}: empty hostname")
+                return None
+
+        except Exception as e:
+            logger.debug(f"SNMP connectivity check failed for {host_ip}: {str(e)}")
+            return None

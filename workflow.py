@@ -318,20 +318,59 @@ class ARPPortMapperWorkflow:
         return valid_prefixes
 
     def _get_snmp_settings_from_prtg(self):
-        """Шаг 3: Получить SNMP настройки устройств из PRTG."""
+        """Шаг 3: Получить SNMP настройки устройств из PRTG и проверить доступность."""
         logger.info("Getting SNMP settings from PRTG")
+
+        # Проверяем флаг для SNMP connectivity checks
+        enable_snmp_check = config.APP_DEFAULTS.get('enable_snmp_check_for_switches', True)
+        if enable_snmp_check:
+            logger.info("SNMP connectivity checks enabled")
+        else:
+            logger.info("SNMP connectivity checks disabled for performance")
 
         try:
             prtg_devices = self.prtg_adapter.get_devices_for_netbox_import()
 
             for device in prtg_devices:
                 ip = device.get('ip_device')
-                if ip:
-                    # Используем значения из устройства или fallback из конфига
-                    self.prtg_snmp_settings[ip] = {
-                        'community': device.get('community') or config.PRTG_DEVICE_DEFAULTS['community'],
-                        'version': device.get('snmp') or config.PRTG_DEVICE_DEFAULTS['snmp']
-                    }
+                if not ip:
+                    continue
+
+                # Используем значения из устройства или fallback из конфига
+                community = device.get('community') or config.PRTG_DEVICE_DEFAULTS['community']
+                version = device.get('snmp') or config.PRTG_DEVICE_DEFAULTS['snmp']
+
+                # Сохраняем настройки для использования в других методах (всегда)
+                self.prtg_snmp_settings[ip] = {
+                    'community': community,
+                    'version': version
+                }
+
+                # SNMP проверка и обновление NetBox только если включено
+                if enable_snmp_check:
+                    try:
+                        hostname = self.snmp_adapter.check_snmp_connectivity(ip, community, version)
+                        if hostname:
+                            self.agg.inc("switches_snmp_ok")
+                            logger.debug(f"SNMP connectivity successful for {ip}, hostname: {hostname}")
+
+                            # Обновляем NetBox при успешном подключении
+                            self.netbox_adapter.update_device_snmp_settings(
+                                device_name=hostname,
+                                snmp_version=version,
+                                snmp_community=community
+                            )
+                            self.agg.inc("netbox_snmp_updates_ok")
+
+                        else:
+                            self.agg.inc("switches_snmp_fail")
+                            self.agg.inc("netbox_snmp_updates_skipped")
+                            logger.debug(f"SNMP check failed for {ip}")
+
+                    except Exception as e:
+                        self.agg.inc("switches_snmp_fail")
+                        self.agg.inc("netbox_snmp_updates_skipped")
+                        logger.debug(f"SNMP check error for {ip}: {str(e)}")
 
             logger.info(f"Retrieved SNMP settings for {len(self.prtg_snmp_settings)} devices from PRTG")
 

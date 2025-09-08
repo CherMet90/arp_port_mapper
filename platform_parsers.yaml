@@ -39,7 +39,7 @@ platform_parsers:
     connection_options:
       netmiko:
         extras:
-          read_timeout_override: 20
+          read_timeout_override: 25
 
   cisco_ios:
     command: "show mac address-table"

@@ -10,6 +10,7 @@ APP_DEFAULTS = {
     'enable_fast_cli': True, # Глобально True, но per-platform override
     'enable_session_log': False, # По умолчанию выкл, для отладки
     'problem_platforms': ['zyxel_os'], # Список для fast_cli=False
+    'enable_snmp_check_for_switches': False,  # Enable SNMP verification for switches (set to False to disable)
 }
 
 # Фильтрация портов для обновления NetBox

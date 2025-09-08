@@ -80,39 +80,44 @@ class NetboxAdapter:
                                    snmp_community: str):
         """
         Обновить SNMP настройки устройства в NetBox.
-    
+
         Args:
             device_name: Имя устройства
             snmp_version: Версия SNMP (1, 2c, 3)
             snmp_community: SNMP community
         """
         logger.debug(f"Updating SNMP settings for device {device_name}")
-    
+
         try:
-            device = NetboxDevice.get_netbox_objects(
-                "dcim.devices", action="get", name=device_name
-            )
-    
+            # Безопасный поиск устройства по имени
+            try:
+                device = NetboxDevice.get_netbox_objects(
+                    "dcim.devices", action="get", name=device_name
+                )
+            except Exception as get_error:
+                # Обрабатываем случай множественных результатов или другие ошибки get
+                logger.warning(f"Failed to get unique device '{device_name}': {str(get_error)}")
+                return
+
             if not device:
                 logger.warning(f"Device {device_name} not found in NetBox")
                 return
-    
+
             # Обновляем custom fields если они отличаются
             updated = False
             if device.custom_fields.get('snmp_version') != snmp_version:
                 device.custom_fields['snmp_version'] = snmp_version
                 updated = True
-    
+
             if device.custom_fields.get('snmp_community') != snmp_community:
                 device.custom_fields['snmp_community'] = snmp_community
                 updated = True
-    
+
             if updated:
                 device.save()
                 logger.info(f"Updated SNMP settings for device {device_name}")
             else:
                 logger.debug(f"SNMP settings unchanged for device {device_name}")
-    
+
         except Exception as e:
             logger.error(f"Failed to update SNMP settings for {device_name}: {str(e)}")
-            raise
